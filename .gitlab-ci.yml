@@ -1,0 +1,87 @@
+---
+
+stages:
+- build
+- security
+- qa
+- misc
+- release
+
+include:
+  - template: SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+build:
+  stage: build
+  image: golang:1.17
+  script:
+    - make build
+  artifacts:
+    expose_as: 'terraform-provider-ceph'
+    paths:
+      - terraform-provider-ceph
+
+sast:
+  stage: security
+  needs: []
+
+dependency_scanning:
+  stage: security
+  needs: []
+
+secret_detection:
+  stage: security
+  needs: []
+
+golang-lint:
+  stage: qa
+  needs: []
+  image: golangci/golangci-lint:v1.45
+  script:
+    - golangci-lint run -v
+
+test-go-generate:
+  stage: qa
+  needs: []
+  image: golang:1.17
+  variables:
+    TERRAFORM_VERSION: 1.1.8
+  script:
+    - apt-get update && apt-get install zip -y
+    - wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+    - unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin
+    - go generate
+    - | 
+      git diff --compact-summary --exit-code ||
+        (echo;
+         echo "Unexpected difference in directories after code generation. Run 'go generate' command and commit.";
+         exit 1)
+
+code_navigation:
+  stage: misc
+  image: sourcegraph/lsif-go:v1
+  needs: []
+  script:
+    - lsif-go
+  allow_failure: true # recommended
+  artifacts:
+    reports:
+      lsif: dump.lsif
+
+release:
+  stage: release
+  image:
+    name: goreleaser/goreleaser:v1.9.2
+    entrypoint: ['']
+  only:
+    - tags
+  variables:
+    # Disable shallow cloning so that goreleaser can diff between tags to
+    # generate a changelog.
+    GIT_DEPTH: 0
+  before_script:
+    - apk add gpg-agent
+    - gpg --import < $GPG_PRIVATE_KEY_FILE
+  script:
+    - goreleaser release --rm-dist

@@ -1,0 +1,8 @@
+terraform-provider-ceph
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+*.swp
+terraform.log
+.vscode
+dist/
