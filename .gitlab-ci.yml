@@ -12,9 +12,18 @@ include:
   - template: Security/Dependency-Scanning.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
 
+.install_ceph:
+  before_script:
+    - wget -q -O- 'https://download.ceph.com/keys/release.asc' |  apt-key add -
+    - source /etc/os-release
+    - echo "deb https://download.ceph.com/debian-pacific/ ${VERSION_CODENAME} main" > /etc/apt/sources.list.d/ceph.list
+    - apt-get update
+    - apt-get install -y libcephfs-dev librbd-dev librados-dev
+
 build:
   stage: build
   image: golang:1.17
+  extends: .install_ceph
   script:
     - make build
   artifacts:
@@ -37,6 +46,7 @@ secret_detection:
 golang-lint:
   stage: qa
   needs: []
+  extends: .install_ceph
   image: golangci/golangci-lint:v1.45
   script:
     - golangci-lint run -v
@@ -45,6 +55,7 @@ test-go-generate:
   stage: qa
   needs: []
   image: golang:1.17
+  extends: .install_ceph
   variables:
     TERRAFORM_VERSION: 1.1.8
   script:
@@ -74,14 +85,14 @@ release:
   image:
     name: goreleaser/goreleaser:v1.9.2
     entrypoint: ['']
+  extends: .install_ceph
   only:
     - tags
   variables:
     # Disable shallow cloning so that goreleaser can diff between tags to
     # generate a changelog.
     GIT_DEPTH: 0
-  before_script:
+  script:
     - apk add gpg-agent
     - gpg --import < $GPG_PRIVATE_KEY_FILE
-  script:
     - goreleaser release --rm-dist

@@ -19,6 +19,12 @@ jobs:
         uses: crazy-max/ghaction-import-gpg@v5
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+      - name: Install ceph
+        run: |
+          wget -q -O- 'https://download.ceph.com/keys/release.asc' | sudo apt-key add -
+          echo "deb https://download.ceph.com/debian-pacific/ ${VERSION_CODENAME} main" | sudo tee /etc/apt/sources.list.d/ceph.list
+          sudo apt-get update
+          sudo apt-get install -y libcephfs-dev librbd-dev librados-dev
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:
