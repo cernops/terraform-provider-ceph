@@ -21,7 +21,7 @@ description: |-
 
 ### Optional
 
-- `caps` (String) The caps wanted for the entity
+- `caps` (Map of String) The caps wanted for the entity
 
 ### Read-Only
 

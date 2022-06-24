@@ -34,13 +34,17 @@ func resourceAuth() *schema.Resource {
 			},
 
 			"caps": {
-				Type:        schema.TypeString,
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 				Optional:    true,
 				Description: "The caps wanted for the entity",
 			},
 
 			"keyring": {
-				Type:        schema.TypeString,
+				Type: schema.TypeString,
+
 				Computed:    true,
 				Description: "The cephx keyring of the entity",
 			},
@@ -54,22 +58,37 @@ func resourceAuth() *schema.Resource {
 	}
 }
 
-const clientKeyringFormat = `
-[%s]
-%s
-`
+const clientKeyringFormat = `[%s]
+%s`
 
-func setResourceData(d *schema.ResourceData, authResponse authResponse) diag.Diagnostics {
-	if err := d.Set("key", authResponse.Key); err != nil {
+func setResourceData(d *schema.ResourceData, authResponses []authResponse) diag.Diagnostics {
+	if len(authResponses) == 0 {
+		return diag.Errorf("No data returned by ceph auth command")
+	}
+	if err := d.Set("key", authResponses[0].Key); err != nil {
 		return diag.Errorf("Unable to set key: %s", err)
 	}
 
-	keyring := fmt.Sprintf(clientKeyringFormat, authResponse.Entity, authResponse.Key)
+	keyring := fmt.Sprintf(clientKeyringFormat, authResponses[0].Entity, authResponses[0].Key)
 	if err := d.Set("keyring", keyring); err != nil {
 		return diag.Errorf("Unable to set keyring: %s", err)
 	}
+	if err := d.Set("caps", authResponses[0].Caps); err != nil {
+		return diag.Errorf("Unable to set caps: %s", err)
+	}
 
 	return nil
+}
+
+func toCapsArray(caps map[string]interface{}) []string {
+	var ret []string
+
+	for key, val := range caps {
+		ret = append(ret, key)
+		ret = append(ret, val.(string))
+	}
+
+	return ret
 }
 
 func resourceAuthCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -83,6 +102,7 @@ func resourceAuthCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		"prefix": "auth get-or-create",
 		"format": "json",
 		"entity": entity,
+		"caps":   toCapsArray(d.Get("caps").(map[string]interface{})),
 	})
 	if err != nil {
 		return diag.Errorf("Unable resource_auth unable to create get-or-create JSON command: %s", err)
@@ -93,14 +113,14 @@ func resourceAuthCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("Error resource_auth on get-or-create command: %s", err)
 	}
 
-	var authResponse authResponse
-	err = json.Unmarshal(buf, &authResponse)
+	var authResponses []authResponse
+	err = json.Unmarshal(buf, &authResponses)
 	if err != nil {
 		return diag.Errorf("Error unmarshal on get-or-create response: %s", err)
 	}
 
 	d.SetId(entity)
-	return setResourceData(d, authResponse)
+	return setResourceData(d, authResponses)
 }
 
 func resourceAuthRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -124,17 +144,38 @@ func resourceAuthRead(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("Error resource_auth on get command: %s", err)
 	}
 
-	var authResponse authResponse
-	err = json.Unmarshal(buf, &authResponse)
+	var authResponses []authResponse
+	err = json.Unmarshal(buf, &authResponses)
 	if err != nil {
-		return diag.Errorf("Error unmarshal on get-or-create response: %s", err)
+		return diag.Errorf("Error unmarshal on get response: %s", err)
 	}
 
-	return setResourceData(d, authResponse)
+	return setResourceData(d, authResponses)
 }
 
 func resourceAuthUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceAuthCreate(ctx, d, meta)
+	conn, err := meta.(*Config).GetCephConnection()
+	if err != nil {
+		return diag.Errorf("Unable to connect to Ceph: %s", err)
+	}
+	entity := d.Get("entity").(string)
+
+	command, err := json.Marshal(map[string]interface{}{
+		"prefix": "auth caps",
+		"format": "json",
+		"entity": entity,
+		"caps":   toCapsArray(d.Get("caps").(map[string]interface{})),
+	})
+	if err != nil {
+		return diag.Errorf("Unable resource_auth unable to create caps JSON command: %s", err)
+	}
+
+	_, _, err = conn.MonCommand(command)
+	if err != nil {
+		return diag.Errorf("Error resource_auth on caps command: %s", err)
+	}
+
+	return resourceAuthRead(ctx, d, meta)
 }
 
 func resourceAuthDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
