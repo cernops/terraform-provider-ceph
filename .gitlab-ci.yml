@@ -92,7 +92,7 @@ release:
     # generate a changelog.
     GIT_DEPTH: 0
   before_script:
-    - apk add ceph-dev
+    - apk add ceph-dev linux-headers
   script:
     - apk add gpg-agent
     - gpg --import < $GPG_PRIVATE_KEY_FILE
