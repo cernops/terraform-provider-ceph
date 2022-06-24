@@ -10,8 +10,6 @@ builds:
   ldflags:
     - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
   goos:
-    - freebsd
-    - windows
     - linux
     - darwin
   goarch:
