@@ -3,12 +3,12 @@
 page_title: "ceph_auth Resource - terraform-provider-ceph"
 subcategory: ""
 description: |-
-  
+  This resource allows you to create a ceph client and retrieve his key and/or keyring.
 ---
 
 # ceph_auth (Resource)
 
-
+This resource allows you to create a ceph client and retrieve his key and/or keyring.
 
 
 

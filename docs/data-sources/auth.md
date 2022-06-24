@@ -3,12 +3,12 @@
 page_title: "ceph_auth Data Source - terraform-provider-ceph"
 subcategory: ""
 description: |-
-  
+  This data source allows you to get information about a ceph client.
 ---
 
 # ceph_auth (Data Source)
 
-
+This data source allows you to get information about a ceph client.
 
 
 

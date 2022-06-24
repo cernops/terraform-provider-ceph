@@ -10,6 +10,7 @@ import (
 
 func dataSourceAuth() *schema.Resource {
 	return &schema.Resource{
+		Description: "This data source allows you to get information about a ceph client.",
 		ReadContext: dataSourceAuthRead,
 
 		Schema: map[string]*schema.Schema{
