@@ -32,13 +32,11 @@ func (config *Config) GetCephConnection() (*rados.Conn, error) {
 		conn, err = rados.NewConn()
 	}
 	if err != nil {
-		conn.Shutdown()
 		return nil, err
 	}
 
 	if config.ConfigPath != "" {
 		if err = conn.ReadConfigFile(config.ConfigPath); err != nil {
-			conn.Shutdown()
 			return nil, err
 		}
 	} else {
@@ -47,14 +45,12 @@ func (config *Config) GetCephConnection() (*rados.Conn, error) {
 
 	if config.MonHost != "" {
 		if err = conn.SetConfigOption("mon_host", config.MonHost); err != nil {
-			conn.Shutdown()
 			return nil, err
 		}
 	}
 
 	if config.Key != "" {
 		if err = conn.SetConfigOption("key", config.Key); err != nil {
-			conn.Shutdown()
 			return nil, err
 		}
 	}
@@ -62,7 +58,6 @@ func (config *Config) GetCephConnection() (*rados.Conn, error) {
 	if config.Keyring != "" {
 		keyringFile, err := ioutil.TempFile("", "terraform-provider-ceph")
 		if err != nil {
-			conn.Shutdown()
 			return nil, err
 		}
 		defer os.Remove(keyringFile.Name())
@@ -71,15 +66,12 @@ func (config *Config) GetCephConnection() (*rados.Conn, error) {
 			return nil, err
 		}
 		if _, err = keyringFile.WriteString(config.Keyring); err != nil {
-			conn.Shutdown()
 			return nil, err
 		}
 	}
 
 	if err = conn.Connect(); err == nil {
 		config.RadosConn = conn
-	} else {
-		conn.Shutdown()
 	}
 	return conn, err
 }
