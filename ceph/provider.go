@@ -37,7 +37,9 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"ceph_wait_online": dataSourceWaitOnline(),
 		},
-		ResourcesMap:  map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"ceph_auth": resourceAuth(),
+		},
 		ConfigureFunc: providerConfigure,
 	}
 }
