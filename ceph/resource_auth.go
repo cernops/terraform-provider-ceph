@@ -39,7 +39,7 @@ func resourceAuth() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Optional:    true,
-				Description: "The caps wanted for the entity",
+				Description: "The caps of the entity",
 			},
 
 			"keyring": {
@@ -61,7 +61,7 @@ func resourceAuth() *schema.Resource {
 const clientKeyringFormat = `[%s]
 %s`
 
-func setResourceData(d *schema.ResourceData, authResponses []authResponse) diag.Diagnostics {
+func setAuthResourceData(d *schema.ResourceData, authResponses []authResponse) diag.Diagnostics {
 	if len(authResponses) == 0 {
 		return diag.Errorf("No data returned by ceph auth command")
 	}
@@ -105,7 +105,7 @@ func resourceAuthCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		"caps":   toCapsArray(d.Get("caps").(map[string]interface{})),
 	})
 	if err != nil {
-		return diag.Errorf("Unable resource_auth unable to create get-or-create JSON command: %s", err)
+		return diag.Errorf("Error resource_auth unable to create get-or-create JSON command: %s", err)
 	}
 
 	buf, _, err := conn.MonCommand(command)
@@ -116,11 +116,11 @@ func resourceAuthCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	var authResponses []authResponse
 	err = json.Unmarshal(buf, &authResponses)
 	if err != nil {
-		return diag.Errorf("Error unmarshal on get-or-create response: %s", err)
+		return diag.Errorf("Error resource_auth unmarshal on get-or-create response: %s", err)
 	}
 
 	d.SetId(entity)
-	return setResourceData(d, authResponses)
+	return setAuthResourceData(d, authResponses)
 }
 
 func resourceAuthRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -136,7 +136,7 @@ func resourceAuthRead(ctx context.Context, d *schema.ResourceData, meta interfac
 		"entity": entity,
 	})
 	if err != nil {
-		return diag.Errorf("Unable resource_auth unable to create get JSON command: %s", err)
+		return diag.Errorf("Error resource_auth unable to create get JSON command: %s", err)
 	}
 
 	buf, _, err := conn.MonCommand(command)
@@ -147,10 +147,10 @@ func resourceAuthRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	var authResponses []authResponse
 	err = json.Unmarshal(buf, &authResponses)
 	if err != nil {
-		return diag.Errorf("Error unmarshal on get response: %s", err)
+		return diag.Errorf("Error resource_auth unmarshal on get response: %s", err)
 	}
 
-	return setResourceData(d, authResponses)
+	return setAuthResourceData(d, authResponses)
 }
 
 func resourceAuthUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -167,7 +167,7 @@ func resourceAuthUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		"caps":   toCapsArray(d.Get("caps").(map[string]interface{})),
 	})
 	if err != nil {
-		return diag.Errorf("Unable resource_auth unable to create caps JSON command: %s", err)
+		return diag.Errorf("Error resource_auth unable to create caps JSON command: %s", err)
 	}
 
 	_, _, err = conn.MonCommand(command)

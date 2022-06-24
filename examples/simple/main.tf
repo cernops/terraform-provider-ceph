@@ -27,3 +27,10 @@ resource "ceph_auth" "test" {
         ceph_wait_online.test
     ]
 }
+
+data "ceph_auth" "test-data" {
+    entity = "client.test"
+    depends_on = [
+        ceph_auth.test
+    ]
+}
