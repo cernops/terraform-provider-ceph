@@ -39,11 +39,10 @@ func Provider() *schema.Provider {
 				Description: "List of mon to connect to Ceph.",
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{
-			"ceph_wait_online": dataSourceWaitOnline(),
-		},
+		DataSourcesMap: map[string]*schema.Resource{},
 		ResourcesMap: map[string]*schema.Resource{
-			"ceph_auth": resourceAuth(),
+			"ceph_wait_online": resourceWaitOnline(),
+			"ceph_auth":        resourceAuth(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
