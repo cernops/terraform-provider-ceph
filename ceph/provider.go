@@ -34,9 +34,11 @@ func Provider() *schema.Provider {
 				Description: "List of mon to connect to Ceph. This is only used with `keyring`, otherwise it is ignored.",
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{},
-		ResourcesMap:   map[string]*schema.Resource{},
-		ConfigureFunc:  providerConfigure,
+		DataSourcesMap: map[string]*schema.Resource{
+			"ceph_wait_online": dataSourceWaitOnline(),
+		},
+		ResourcesMap:  map[string]*schema.Resource{},
+		ConfigureFunc: providerConfigure,
 	}
 }
 
