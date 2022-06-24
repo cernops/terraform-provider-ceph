@@ -19,6 +19,7 @@ description: |-
 
 - `cluster` (String) The name of the Ceph cluster to use.
 - `config_path` (String) Path to the ceph config
+- `entity` (String) The cephx entity to use to connect to Ceph (i.e.: client.admin).
+- `key` (String) The actual key (not a path to a file), to use to connect to Ceph. Using this ignore `config_path` and you must also specify `mon_host`
 - `keyring` (String) The actual keyring (not a path to a file), to use to connect to Ceph. Using this ignore `config_path` and you must also specify `mon_host`
-- `mon_host` (String) List of mon to connect to Ceph. This is only used with `keyring`, otherwise it is ignored.
-- `username` (String) The cephx username to use to connect to Ceph (i.e.: client.admin).
+- `mon_host` (String) List of mon to connect to Ceph. This is only used with `keyring` or `key`, otherwise it is ignored.

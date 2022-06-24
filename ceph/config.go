@@ -1,7 +1,6 @@
 package ceph
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -10,9 +9,10 @@ import (
 
 type Config struct {
 	ConfigPath string
-	Username   string
+	Entity     string
 	Cluster    string
 	Keyring    string
+	Key        string
 	MonHost    string
 
 	RadosConn *rados.Conn
@@ -26,10 +26,8 @@ func (config *Config) GetCephConnection() (*rados.Conn, error) {
 		return config.RadosConn, nil
 	}
 
-	if config.Username != "" && config.Cluster != "" {
-		conn, err = rados.NewConnWithClusterAndUser(config.Cluster, config.Username)
-	} else if config.Username != "" {
-		conn, err = rados.NewConnWithUser(config.Username)
+	if config.Entity != "" {
+		conn, err = rados.NewConnWithClusterAndUser(config.Cluster, config.Entity)
 	} else {
 		conn, err = rados.NewConn()
 	}
@@ -38,53 +36,50 @@ func (config *Config) GetCephConnection() (*rados.Conn, error) {
 		return nil, err
 	}
 
-	configPath := config.ConfigPath
-	if config.Keyring != "" {
-		if config.MonHost == "" {
+	if config.ConfigPath != "" {
+		if err = conn.ReadConfigFile(config.ConfigPath); err != nil {
 			conn.Shutdown()
-			return nil, fmt.Errorf("Error creating Ceph connection: keyring specified while mon_host is not")
+			return nil, err
 		}
+	} else {
+		conn.ReadDefaultConfigFile() //nolint:golint,errcheck
+	}
 
+	if config.MonHost != "" {
+		if err = conn.SetConfigOption("mon_host", config.MonHost); err != nil {
+			conn.Shutdown()
+			return nil, err
+		}
+	}
+
+	if config.Key != "" {
+		if err = conn.SetConfigOption("key", config.Key); err != nil {
+			conn.Shutdown()
+			return nil, err
+		}
+	}
+
+	if config.Keyring != "" {
 		keyringFile, err := ioutil.TempFile("", "terraform-provider-ceph")
 		if err != nil {
+			conn.Shutdown()
 			return nil, err
 		}
 		defer os.Remove(keyringFile.Name())
-		_, err = keyringFile.WriteString(config.Keyring)
-		if err != nil {
+		if err = conn.SetConfigOption("keyring", keyringFile.Name()); err != nil {
+			conn.Shutdown()
 			return nil, err
 		}
-
-		cephConfigFile, err := ioutil.TempFile("", "terraform-provider-ceph")
-		if err != nil {
-			return nil, err
-		}
-		defer os.Remove(cephConfigFile.Name())
-		cephConfig := fmt.Sprintf(`
-[global]
-mon host = %s
-keyring = %s
-`, config.MonHost, keyringFile.Name())
-		_, err = cephConfigFile.WriteString(cephConfig)
-		if err != nil {
+		if _, err = keyringFile.WriteString(config.Keyring); err != nil {
+			conn.Shutdown()
 			return nil, err
 		}
 	}
 
-	if configPath != "" {
-		err = conn.ReadConfigFile(configPath)
+	if err = conn.Connect(); err == nil {
+		config.RadosConn = conn
 	} else {
-		err = conn.ReadDefaultConfigFile()
-	}
-	if err != nil {
-		conn.Shutdown()
-		return nil, err
-	}
-
-	err = conn.Connect()
-	if err != nil {
 		conn.Shutdown()
 	}
-	config.RadosConn = conn
 	return conn, err
 }

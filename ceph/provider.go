@@ -12,26 +12,31 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Description: "Path to the ceph config",
 			},
-			"username": {
+			"entity": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The cephx username to use to connect to Ceph (i.e.: client.admin).",
+				Description: "The cephx entity to use to connect to Ceph (i.e.: client.admin).",
 			},
 			"cluster": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The name of the Ceph cluster to use.",
+				Default:     "ceph",
 			},
 			"keyring": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Description: "The actual keyring (not a path to a file), to use to connect to Ceph. " +
-					"Using this ignore `config_path` and you must also specify `mon_host`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The actual keyring (not a path to a file) to use to connect to Ceph.",
+			},
+			"key": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The actual key (not a path to a file) to use to connect to Ceph.",
 			},
 			"mon_host": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "List of mon to connect to Ceph. This is only used with `keyring`, otherwise it is ignored.",
+				Description: "List of mon to connect to Ceph.",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -47,9 +52,10 @@ func Provider() *schema.Provider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config := &Config{
 		ConfigPath: d.Get("config_path").(string),
-		Username:   d.Get("username").(string),
+		Entity:     d.Get("entity").(string),
 		Cluster:    d.Get("cluster").(string),
 		Keyring:    d.Get("keyring").(string),
+		Key:        d.Get("key").(string),
 		MonHost:    d.Get("mon_host").(string),
 	}
 
