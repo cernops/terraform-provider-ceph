@@ -14,11 +14,17 @@ type Config struct {
 	Cluster    string
 	Keyring    string
 	MonHost    string
+
+	RadosConn *rados.Conn
 }
 
-func (config Config) GetCephConnection() (*rados.Conn, error) {
+func (config *Config) GetCephConnection() (*rados.Conn, error) {
 	var conn *rados.Conn
 	var err error
+
+	if config.RadosConn != nil {
+		return config.RadosConn, nil
+	}
 
 	if config.Username != "" && config.Cluster != "" {
 		conn, err = rados.NewConnWithClusterAndUser(config.Cluster, config.Username)
@@ -79,5 +85,6 @@ keyring = %s
 	if err != nil {
 		conn.Shutdown()
 	}
+	config.RadosConn = conn
 	return conn, err
 }
