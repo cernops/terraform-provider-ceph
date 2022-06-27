@@ -129,7 +129,7 @@ func resourceAuthRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.Errorf("Unable to connect to Ceph: %s", err)
 	}
-	entity := d.Get("entity").(string)
+	entity := d.Id()
 
 	command, err := json.Marshal(map[string]interface{}{
 		"prefix": "auth get",
