@@ -26,7 +26,7 @@ This resource allows you to create a ceph client and retrieve his key and/or key
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `key` (String) The cephx key of the entity
-- `keyring` (String) The cephx keyring of the entity
+- `key` (String, Sensitive) The cephx key of the entity
+- `keyring` (String, Sensitive) The cephx keyring of the entity
 
 
