@@ -151,6 +151,9 @@ func resourceAuthRead(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("Error resource_auth unmarshal on get response: %s", err)
 	}
 
+	if err := d.Set("entity", entity); err != nil {
+		return diag.Errorf("Unable to set entity: %s", err)
+	}
 	return setAuthResourceData(d, authResponses)
 }
 
