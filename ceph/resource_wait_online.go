@@ -16,7 +16,7 @@ func resourceWaitOnline() *schema.Resource {
 		Description: "This dummy resource is waiting to Ceph to be online at creation time for up to 1 hour. " +
 			"This is useful for example on a boostrap procedure.",
 		CreateContext: resourceWaitOnlineCreate,
-		ReadContext:   resourceWaitOnlineDummy,
+		ReadContext:   resourceWaitOnlineRead,
 		DeleteContext: resourceWaitOnlineDummy,
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(time.Hour),
@@ -58,6 +58,13 @@ func resourceWaitOnlineCreate(ctx context.Context, d *schema.ResourceData, meta 
 	})
 
 	return diag.FromErr(err)
+}
+
+func resourceWaitOnlineRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := d.Set("cluster_name", d.Id()); err != nil {
+		return diag.Errorf("Unable to set cluster_name: %s", err)
+	}
+	return nil
 }
 
 func resourceWaitOnlineDummy(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
