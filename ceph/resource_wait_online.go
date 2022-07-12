@@ -42,7 +42,7 @@ func resourceWaitOnlineCreate(ctx context.Context, d *schema.ResourceData, meta 
 	config := meta.(*Config)
 	log.Printf("[DEBUG] Ceph starting ceph_wait_online")
 
-	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutRead), func() *resource.RetryError {
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		_, err := config.GetCephConnection()
 		if err == nil {
 			log.Printf("[DEBUG] Ceph online on ceph_wait_online")
