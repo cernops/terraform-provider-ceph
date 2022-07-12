@@ -62,7 +62,6 @@ func (config *Config) GetCephConnection() (*rados.Conn, error) {
 		}
 		defer os.Remove(keyringFile.Name())
 		if err = conn.SetConfigOption("keyring", keyringFile.Name()); err != nil {
-			conn.Shutdown()
 			return nil, err
 		}
 		if _, err = keyringFile.WriteString(config.Keyring); err != nil {
