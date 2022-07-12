@@ -62,7 +62,8 @@ func resourceAuth() *schema.Resource {
 }
 
 const clientKeyringFormat = `[%s]
-%s`
+	key = %s
+`
 
 func setAuthResourceData(d *schema.ResourceData, authResponses []authResponse) diag.Diagnostics {
 	if len(authResponses) == 0 {
