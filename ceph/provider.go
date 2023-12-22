@@ -60,5 +60,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		MonHost:    d.Get("mon_host").(string),
 	}
 
+	config.GetCephConnection()
 	return config, nil
 }
